@@ -4,9 +4,11 @@ import java.util.*;
 
 public class ScoreBoardImpl implements ScoreBoard {
     private List<Match> matches;
+    private final Set<String> activeTeams;
 
     public ScoreBoardImpl() {
         matches = new ArrayList<>();
+        activeTeams = new HashSet<>();
     }
 
     public void startMatch(String homeTeam, String awayTeam) {
@@ -15,6 +17,8 @@ public class ScoreBoardImpl implements ScoreBoard {
         }
 
         matches.add(new Match(homeTeam, awayTeam));
+        activeTeams.add(homeTeam);
+        activeTeams.add(awayTeam);
     }
 
     public void updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
@@ -44,20 +48,16 @@ public class ScoreBoardImpl implements ScoreBoard {
         matches.removeIf(match -> match.getHomeTeam().equals(homeTeam) && match.getAwayTeam().equals(awayTeam));
     }
 
-    public List<Match> getSummary() {
-        List<Match> summary = new ArrayList<>(matches);
-        summary.sort(Comparator.comparingInt(Match::getTotalScore)
+    public Map<String, Integer> getSummary() {
+        Map<String, Integer> summaryMap = new LinkedHashMap<>();
+        matches.stream().sorted(Comparator.comparingInt(Match::getTotalScore)
                 .thenComparing(Match::getStartTime)
-                .reversed());
-        return summary;
+                .reversed())
+                .forEach(match -> summaryMap.put(match.toString(), match.getTotalScore()));
+        return summaryMap;
     }
 
     private boolean isTeamPlaying(String team) {
-        for (Match match : matches) {
-            if (match.getHomeTeam().equals(team) || match.getAwayTeam().equals(team)) {
-                return true;
-            }
-        }
-        return false;
+        return activeTeams.contains(team);
     }
 }

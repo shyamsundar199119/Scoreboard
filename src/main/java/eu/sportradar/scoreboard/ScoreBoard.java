@@ -2,6 +2,7 @@ package eu.sportradar.scoreboard;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public interface ScoreBoard {
 
@@ -13,5 +14,5 @@ public interface ScoreBoard {
 
     public void finishMatch(String homeTeam, String awayTeam);
 
-    public List<Match> getSummary();
+    public Map<String, Integer> getSummary();
 }

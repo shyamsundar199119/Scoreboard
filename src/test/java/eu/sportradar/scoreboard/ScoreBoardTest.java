@@ -3,7 +3,7 @@ package eu.sportradar.scoreboard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +37,7 @@ public class ScoreBoardTest {
     public void testUpdateScore() {
         scoreBoard.startMatch("Mexico", "Canada");
         scoreBoard.updateScore("Mexico", "Canada", 0, 5);
-        assertEquals("Mexico 0 - Canada 5", scoreBoard.getSummary().get(0).toString());
+        assertTrue(scoreBoard.getSummary().containsKey("Mexico 0 - Canada 5"));
     }
 
     @Test
@@ -69,8 +69,9 @@ public class ScoreBoardTest {
         scoreBoard.updateScore("Mexico", "Canada", 3, 2);
         scoreBoard.updateScore("Canada", "Mexico", 4, 3);
 
-        List<Match> matches = scoreBoard.getSummary();
-        assertEquals("Mexico 3 - Canada 4", matches.get(0).toString());
+        Map<String, Integer> summary = scoreBoard.getSummary();
+        assertEquals(1, summary.size());
+        assertTrue(summary.containsKey("Mexico 3 - Canada 4"));
     }
 
     @Test
@@ -98,12 +99,22 @@ public class ScoreBoardTest {
         scoreBoard.updateScore("Uruguay", "Italy", 6, 6);
         scoreBoard.updateScore("Argentina", "Australia", 3, 1);
 
-        List<Match> summary = scoreBoard.getSummary();
+        Map<String, Integer> summaryMap = scoreBoard.getSummary();
 
-        assertEquals("Uruguay 6 - Italy 6", summary.get(0).toString());
-        assertEquals("Spain 10 - Brazil 2", summary.get(1).toString());
-        assertEquals("Mexico 0 - Canada 5", summary.get(2).toString());
-        assertEquals("Argentina 3 - Australia 1", summary.get(3).toString());
-        assertEquals("Germany 2 - France 2", summary.get(4).toString());
+        String[] expectedOrder = {
+                "Uruguay 6 - Italy 6",
+                "Spain 10 - Brazil 2",
+                "Mexico 0 - Canada 5",
+                "Argentina 3 - Australia 1",
+                "Germany 2 - France 2"
+        };
+
+        assertEquals(expectedOrder.length, summaryMap.size());
+
+        int i = 0;
+        for (String key : summaryMap.keySet()) {
+            assertEquals(expectedOrder[i++], key);
+        }
+
     }
 }
