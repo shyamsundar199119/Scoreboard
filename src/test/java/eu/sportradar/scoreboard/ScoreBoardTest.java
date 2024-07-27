@@ -1,5 +1,6 @@
 package eu.sportradar.scoreboard;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -9,6 +10,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ScoreBoardTest {
 
     private ScoreBoard scoreBoard;
+
+    @BeforeEach
+    public void setUp() {
+        scoreBoard = new ScoreBoardImpl();
+    }
 
     @Test
     public void testStartMatch() {
@@ -75,11 +81,15 @@ public class ScoreBoardTest {
     }
 
     @Test
-    public void testGetSummary() {
+    public void testGetSummary() throws InterruptedException {
         scoreBoard.startMatch("Mexico", "Canada");
+        Thread.sleep(100);
         scoreBoard.startMatch("Spain", "Brazil");
+        Thread.sleep(100);
         scoreBoard.startMatch("Germany", "France");
+        Thread.sleep(100);
         scoreBoard.startMatch("Uruguay", "Italy");
+        Thread.sleep(100);
         scoreBoard.startMatch("Argentina", "Australia");
 
         scoreBoard.updateScore("Mexico", "Canada", 0, 5);
