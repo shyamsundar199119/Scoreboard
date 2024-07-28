@@ -68,6 +68,8 @@ public class ScoreBoardTest {
         scoreBoard.startMatch("Mexico", "Canada");
         scoreBoard.finishMatch("Mexico", "Canada");
         assertEquals(0, scoreBoard.getSummary().size());
+        scoreBoard.startMatch("Mexico", "Canada");
+        assertEquals(1, scoreBoard.getSummary().size());
     }
 
     @Test

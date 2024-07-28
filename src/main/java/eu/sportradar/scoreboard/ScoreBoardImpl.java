@@ -42,6 +42,8 @@ public class ScoreBoardImpl implements ScoreBoard {
     public void finishMatch(String homeTeam, String awayTeam) {
         String key = getKey(homeTeam, awayTeam);
         matches.remove(key);
+        activeTeams.remove(homeTeam);
+        activeTeams.remove(awayTeam);
     }
 
     private void validateScores(int newHomeScore, int newAwayScore, int currentHomeScore, int currentAwayScore) {
