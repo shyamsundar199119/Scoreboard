@@ -51,6 +51,16 @@ public class ScoreBoardTest {
     }
 
     @Test
+    public void testFinishMatchWithoutStarting() {
+        IllegalArgumentException thrown = assertThrows(
+                IllegalArgumentException.class,
+                () -> scoreBoard.finishMatch("Mexico", "Canada"),
+                "Expected finishMatch() to throw, but it didn't"
+        );
+        assertTrue(thrown.getMessage().contains("Match not found"));
+    }
+
+    @Test
     public void testUpdateScoreWithLesserValue() {
         scoreBoard.startMatch("Mexico", "Canada");
         scoreBoard.updateScore("Mexico", "Canada", 3, 2);

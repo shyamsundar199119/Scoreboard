@@ -2,15 +2,17 @@ package eu.sportradar.scoreboard;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ScoreBoardImpl implements ScoreBoard {
     private final Set<String> activeTeams;
 
     private Map<String, Match> matches;
+    private final ReentrantLock lock = new ReentrantLock();
 
     public ScoreBoardImpl() {
         matches = new ConcurrentHashMap<>();
-        activeTeams = new HashSet<>();
+        activeTeams = ConcurrentHashMap.newKeySet();
     }
 
     private String getKey(String homeTeam, String awayTeam) {
@@ -18,14 +20,19 @@ public class ScoreBoardImpl implements ScoreBoard {
     }
 
     public void startMatch(String homeTeam, String awayTeam) {
-        if (isTeamPlaying(homeTeam) || isTeamPlaying(awayTeam)) {
-            throw new IllegalArgumentException("One of the teams is already playing a match");
-        }
+        lock.lock();
+        try {
+            if (isTeamPlaying(homeTeam) || isTeamPlaying(awayTeam)) {
+                throw new IllegalArgumentException("One of the teams is already playing a match");
+            }
 
-        String key = getKey(homeTeam, awayTeam);
-        matches.put(key, new Match(homeTeam, awayTeam));
-        activeTeams.add(homeTeam);
-        activeTeams.add(awayTeam);
+            String key = getKey(homeTeam, awayTeam);
+            matches.put(key, new Match(homeTeam, awayTeam));
+            activeTeams.add(homeTeam);
+            activeTeams.add(awayTeam);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
@@ -34,16 +41,25 @@ public class ScoreBoardImpl implements ScoreBoard {
         if (match == null) {
             throw new IllegalArgumentException("Match not found");
         }
-
-        validateScores(homeScore, awayScore, match.getHomeScore(), match.getAwayScore());
-        match.setScore(homeScore, awayScore);
+        synchronized (match) {
+            validateScores(homeScore, awayScore, match.getHomeScore(), match.getAwayScore());
+            match.setScore(homeScore, awayScore);
+        }
     }
 
     public void finishMatch(String homeTeam, String awayTeam) {
-        String key = getKey(homeTeam, awayTeam);
-        matches.remove(key);
-        activeTeams.remove(homeTeam);
-        activeTeams.remove(awayTeam);
+        lock.lock();
+        try {
+            String key = getKey(homeTeam, awayTeam);
+            if (matches.get(key) == null)
+                throw new IllegalArgumentException("Match not found");
+
+            matches.remove(key);
+            activeTeams.remove(homeTeam);
+            activeTeams.remove(awayTeam);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void validateScores(int newHomeScore, int newAwayScore, int currentHomeScore, int currentAwayScore) {
@@ -54,10 +70,16 @@ public class ScoreBoardImpl implements ScoreBoard {
 
     public Map<String, Match> getSummary() {
         Map<String, Match> summaryMap = new LinkedHashMap<>();
-        matches.values().stream().sorted(Comparator.comparingInt(Match::getTotalScore)
-                .thenComparing(Match::getStartTime)
-                .reversed())
-                .forEach(match -> summaryMap.put(getKey(match.getHomeTeam(),match.getAwayTeam()), match));
+        lock.lock();
+        try {
+            matches.values().stream().sorted(Comparator.comparingInt(Match::getTotalScore)
+                            .thenComparing(Match::getStartTime)
+                            .reversed())
+                    .forEach(match -> summaryMap.put(getKey(match.getHomeTeam(), match.getAwayTeam()), match));
+
+        } finally {
+            lock.unlock();
+        }
         return summaryMap;
     }
 
