@@ -14,5 +14,5 @@ public interface ScoreBoard {
 
     public void finishMatch(String homeTeam, String awayTeam);
 
-    public Map<String, Integer> getSummary();
+    public Map<String, Match> getSummary();
 }

@@ -1,14 +1,20 @@
 package eu.sportradar.scoreboard;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ScoreBoardImpl implements ScoreBoard {
-    private List<Match> matches;
     private final Set<String> activeTeams;
 
+    private Map<String, Match> matches;
+
     public ScoreBoardImpl() {
-        matches = new ArrayList<>();
+        matches = new ConcurrentHashMap<>();
         activeTeams = new HashSet<>();
+    }
+
+    private String getKey(String homeTeam, String awayTeam) {
+        return homeTeam + ":" + awayTeam;
     }
 
     public void startMatch(String homeTeam, String awayTeam) {
@@ -16,44 +22,40 @@ public class ScoreBoardImpl implements ScoreBoard {
             throw new IllegalArgumentException("One of the teams is already playing a match");
         }
 
-        matches.add(new Match(homeTeam, awayTeam));
+        String key = getKey(homeTeam, awayTeam);
+        matches.put(key, new Match(homeTeam, awayTeam));
         activeTeams.add(homeTeam);
         activeTeams.add(awayTeam);
     }
 
     public void updateScore(String homeTeam, String awayTeam, int homeScore, int awayScore) {
-        for (Match match : matches) {
-            if ((match.getHomeTeam().equals(homeTeam) && match.getAwayTeam().equals(awayTeam)) ||
-                    (match.getHomeTeam().equals(awayTeam) && match.getAwayTeam().equals(homeTeam))) {
-
-                if (homeTeam.equals(match.getHomeTeam())) {
-                    if (homeScore < match.getHomeScore() || awayScore < match.getAwayScore()) {
-                        throw new IllegalArgumentException("New scores must be greater than or equal to current scores");
-                    }
-                    match.setScore(homeScore, awayScore);
-                    return;
-                } else {
-                    if (homeScore < match.getAwayScore() || awayScore < match.getHomeScore()) {
-                        throw new IllegalArgumentException("New scores must be greater than or equal to current scores");
-                    }
-                    match.setScore(awayScore, homeScore);
-                    return;
-                }
-            }
+        String key = getKey(homeTeam, awayTeam);
+        Match match = matches.get(key);
+        if (match == null) {
+            throw new IllegalArgumentException("Match not found");
         }
-        throw new IllegalArgumentException("Match not found");
+
+        validateScores(homeScore, awayScore, match.getHomeScore(), match.getAwayScore());
+        match.setScore(homeScore, awayScore);
     }
 
     public void finishMatch(String homeTeam, String awayTeam) {
-        matches.removeIf(match -> match.getHomeTeam().equals(homeTeam) && match.getAwayTeam().equals(awayTeam));
+        String key = getKey(homeTeam, awayTeam);
+        matches.remove(key);
     }
 
-    public Map<String, Integer> getSummary() {
-        Map<String, Integer> summaryMap = new LinkedHashMap<>();
-        matches.stream().sorted(Comparator.comparingInt(Match::getTotalScore)
+    private void validateScores(int newHomeScore, int newAwayScore, int currentHomeScore, int currentAwayScore) {
+        if (newHomeScore < currentHomeScore || newAwayScore < currentAwayScore) {
+            throw new IllegalArgumentException("New scores must be greater than or equal to current scores");
+        }
+    }
+
+    public Map<String, Match> getSummary() {
+        Map<String, Match> summaryMap = new LinkedHashMap<>();
+        matches.values().stream().sorted(Comparator.comparingInt(Match::getTotalScore)
                 .thenComparing(Match::getStartTime)
                 .reversed())
-                .forEach(match -> summaryMap.put(match.toString(), match.getTotalScore()));
+                .forEach(match -> summaryMap.put(getKey(match.getHomeTeam(),match.getAwayTeam()), match));
         return summaryMap;
     }
 

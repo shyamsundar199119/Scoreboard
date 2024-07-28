@@ -37,7 +37,7 @@ public class ScoreBoardTest {
     public void testUpdateScore() {
         scoreBoard.startMatch("Mexico", "Canada");
         scoreBoard.updateScore("Mexico", "Canada", 0, 5);
-        assertTrue(scoreBoard.getSummary().containsKey("Mexico 0 - Canada 5"));
+        assertTrue(scoreBoard.getSummary().containsKey("Mexico:Canada"));
     }
 
     @Test
@@ -61,17 +61,6 @@ public class ScoreBoardTest {
                 "Expected updateScore() to throw, but it didn't"
         );
         assertTrue(thrown.getMessage().contains("New scores must be greater than or equal to current scores"));
-    }
-
-    @Test
-    public void testUpdateScoreWithInterchangedTeams() {
-        scoreBoard.startMatch("Mexico", "Canada");
-        scoreBoard.updateScore("Mexico", "Canada", 3, 2);
-        scoreBoard.updateScore("Canada", "Mexico", 4, 3);
-
-        Map<String, Integer> summary = scoreBoard.getSummary();
-        assertEquals(1, summary.size());
-        assertTrue(summary.containsKey("Mexico 3 - Canada 4"));
     }
 
     @Test
@@ -99,7 +88,7 @@ public class ScoreBoardTest {
         scoreBoard.updateScore("Uruguay", "Italy", 6, 6);
         scoreBoard.updateScore("Argentina", "Australia", 3, 1);
 
-        Map<String, Integer> summaryMap = scoreBoard.getSummary();
+        Map<String, Match> summaryMap = scoreBoard.getSummary();
 
         String[] expectedOrder = {
                 "Uruguay 6 - Italy 6",
@@ -113,7 +102,7 @@ public class ScoreBoardTest {
 
         int i = 0;
         for (String key : summaryMap.keySet()) {
-            assertEquals(expectedOrder[i++], key);
+            assertEquals(expectedOrder[i++], summaryMap.get(key).toString());
         }
 
     }
